@@ -28,12 +28,18 @@
 			<id>clojars.org</id>
 			<url>http://clojars.org/repo</url>
 		</repository>
+
+		<repository>
+			<id>Local Nexus Repository</id>
+			<url>http://172.30.10.200:8081/nexus/content/repositories/releases/</url>
+		</repository>
 	</repositories>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<storm.version>0.9.3</storm.version>
+		<rocketmq.version>3.2.2</rocketmq.version>
 
 		<slf4j.version>1.7.5</slf4j.version>
 		<log4j.version>1.2.17</log4j.version>
@@ -111,7 +117,7 @@
 		<dependency>
 			<groupId>com.alibaba.rocketmq</groupId>
 			<artifactId>rocketmq-client</artifactId>
-			<version>3.2.5</version>
+			<version>${rocketmq.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>

@@ -26,11 +26,10 @@ public class SimpleTopology {
     private static final String PROP_FILE_NAME = "mqspout.default.prop";
 
     private static Config       config         = new Config();
-    private static boolean      isLocalMode    = true;
+    private static boolean      isLocalMode    = false;
 
     public static void main(String[] args) throws Exception {
         TopologyBuilder builder = buildTopology(ConfigUtils.init(PROP_FILE_NAME));
-
         submitTopology(builder);
     }
 
