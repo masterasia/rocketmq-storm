@@ -1,5 +1,6 @@
 package com.alibaba.rocketmq.storm;
 
+import com.alibaba.rocketmq.common.MixAll;
 import org.apache.commons.lang.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,8 @@ public class MessageConsumerManager {
                                                  Boolean isPushlet) throws MQClientException {
         LOG.info("Begin to init consumer,instanceName->{},configuration->{}",
                 new Object[] { config.getInstanceName(), config });
-
+        LOG.info("----------------------------------------------- Enable SSL: " + System.getProperty("enable_ssl"));
+        LOG.info("----------------------------------------------- rocketmq.namesrv.domain: " + MixAll.WS_DOMAIN_NAME);
         if (BooleanUtils.isTrue(isPushlet)) {
             pushConsumer = (DefaultMQPushConsumer) FastBeanUtils.copyProperties(config,
                     DefaultMQPushConsumer.class);
