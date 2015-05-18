@@ -42,10 +42,9 @@ public class SimpleTopology {
 
         BoltDeclarer writerBolt = builder.setBolt(BOLT_NAME, new RocketMqBolt(), boltParallel);
 
-        StreamMessageSpout defaultSpout = (StreamMessageSpout) RocketMQSpoutFactory
-                .getSpout(RocketMQSpouts.STREAM.getValue());
-        RocketMQConfig mqConig = (RocketMQConfig) config.get(ConfigUtils.CONFIG_ROCKETMQ);
-        defaultSpout.setConfig(mqConig);
+        StreamMessageSpout defaultSpout = (StreamMessageSpout) RocketMQSpoutFactory.getSpout(RocketMQSpouts.STREAM.getValue());
+        RocketMQConfig mqConfig = (RocketMQConfig) config.get(ConfigUtils.CONFIG_ROCKETMQ);
+        defaultSpout.setConfig(mqConfig);
 
         String id = (String) config.get(ConfigUtils.CONFIG_TOPIC);
         builder.setSpout(id, defaultSpout, spoutParallel);
@@ -56,7 +55,7 @@ public class SimpleTopology {
 
     private static void submitTopology(TopologyBuilder builder) {
         try {
-            if (isLocalMode == true) {
+            if (isLocalMode) {
                 LocalCluster cluster = new LocalCluster();
 
                 config.put(Config.STORM_CLUSTER_MODE, "local");
@@ -68,8 +67,8 @@ public class SimpleTopology {
                 cluster.shutdown();
             } else {
                 config.put(Config.STORM_CLUSTER_MODE, "distributed");
-                StormSubmitter.submitTopology(String.valueOf(config.get("topology.name")), config,
-                        builder.createTopology());
+                config.put(Config.WORKER_CHILDOPTS, "-Denable_ssl=true -Drocketmq.namesrv.domain=172.30.50.54 -Dlog.home=/home/storm/logs");
+                StormSubmitter.submitTopology(String.valueOf(config.get("topology.name")), config, builder.createTopology());
             }
 
         } catch (AlreadyAliveException e) {
