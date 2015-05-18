@@ -25,11 +25,12 @@ public class SimpleTopology {
     private static final String BOLT_NAME      = "MQBolt";
     private static final String PROP_FILE_NAME = "mqspout.default.prop";
 
-    private static Config       config         = new Config();
+    private static Config       config         = null;
     private static boolean      isLocalMode    = false;
 
     public static void main(String[] args) throws Exception {
-        TopologyBuilder builder = buildTopology(ConfigUtils.init(PROP_FILE_NAME));
+        config = ConfigUtils.init(PROP_FILE_NAME);
+        TopologyBuilder builder = buildTopology(config);
         submitTopology(builder);
     }
 
