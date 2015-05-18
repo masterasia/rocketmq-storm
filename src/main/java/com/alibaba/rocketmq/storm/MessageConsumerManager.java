@@ -49,7 +49,7 @@ public class MessageConsumerManager {
                     DefaultMQPullConsumer.class);
             pullConsumer.setConsumerGroup(config.getGroupId());
             pullConsumer.setMessageModel(MessageModel.CLUSTERING);
-            pullConsumer.setRegisterTopics(Sets.newHashSet(config.getTopic()));
+            //pullConsumer.setRegisterTopics(Sets.newHashSet(config.getTopic()));
             //pullConsumer.setNamesrvAddr(null);
             return pullConsumer;
         }
