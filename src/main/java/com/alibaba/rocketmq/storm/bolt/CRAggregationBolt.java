@@ -31,14 +31,14 @@ public class CRAggregationBolt implements IRichBolt {
 
     private OutputCollector     collector;
 
-    private ReadWriteLock lock = new ReentrantReadWriteLock();
+    private transient ReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * We use one worker, one executor and one task strategy.
      */
     private HashMap<String /* offer_id */, HashMap<String /* affiliate_id*/, HashMap<String /* event_code*/, Long>>> resultMap = new HashMap<>();
 
-    private ScheduledExecutorService executorService =
+    private transient ScheduledExecutorService executorService =
             new ScheduledThreadPoolExecutor(2, new ThreadFactoryImpl("PersistThread"),
                     new ScheduledThreadPoolExecutor.CallerRunsPolicy());
 
