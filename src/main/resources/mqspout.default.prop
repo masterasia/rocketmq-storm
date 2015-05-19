@@ -15,4 +15,4 @@ rocketmq.spout.ordered=false
 
 rocketmq.enable_ssl=true
 rocketmq.namesrv.domain=172.30.50.54
-rocketmq.log.home=/home/dev/logs
+rocketmq.log.home=/tmp/logs
