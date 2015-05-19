@@ -30,6 +30,10 @@ public class MessageConsumerManagerTest {
         config.setTopic("rocketmq-topic");
         config.setTopicTag("rocketmq-topic-tag");
         config.setGroupId("rocketmq-group");
+
+        System.setProperty("enable_ssl", "true");
+        System.setProperty("rocketmq.namesrv.domain", "172.30.50.54");
+        System.setProperty("log.home", "/home/storm/logs");
     }
 
     @Test
