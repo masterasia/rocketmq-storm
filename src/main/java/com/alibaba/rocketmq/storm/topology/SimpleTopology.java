@@ -1,5 +1,6 @@
 package com.alibaba.rocketmq.storm.topology;
 
+import com.alibaba.rocketmq.storm.bolt.CRAggregationBolt;
 import org.apache.commons.lang.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,8 @@ public class SimpleTopology {
 
         int spoutParallel = NumberUtils.toInt((String) config.get("topology.spout.parallel"), 1);
 
-        BoltDeclarer writerBolt = builder.setBolt(BOLT_NAME, new RocketMqBolt(), boltParallel);
+        BoltDeclarer writerBolt = builder.setBolt(BOLT_NAME, new CRAggregationBolt(), boltParallel)
+                .setNumTasks(boltParallel);
 
         StreamMessageSpout defaultSpout = (StreamMessageSpout) RocketMQSpoutFactory.getSpout(RocketMQSpouts.STREAM.getValue());
         RocketMQConfig mqConfig = (RocketMQConfig) config.get(ConfigUtils.CONFIG_ROCKETMQ);
