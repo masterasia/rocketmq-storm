@@ -69,6 +69,7 @@ public class SimpleTopology {
             } else {
                 config.put(Config.STORM_CLUSTER_MODE, "distributed");
                 config.put(Config.WORKER_CHILDOPTS, "-Denable_ssl=true -Drocketmq.namesrv.domain=172.30.50.54 -Dlog.home=/home/storm/logs");
+                config.put(Config.TOPOLOGY_WORKER_CHILDOPTS, "-Denable_ssl=true -Drocketmq.namesrv.domain=172.30.50.54 -Dlog.home=/home/storm/logs");
 
                 //debug
                 config.remove(ConfigUtils.CONFIG_ROCKETMQ);
