@@ -70,7 +70,9 @@ public class SimpleTopology {
                 cluster.shutdown();
             } else {
                 config.put(Config.STORM_CLUSTER_MODE, "distributed");
-                config.put(Config.TOPOLOGY_WORKER_CHILDOPTS, "-Denable_ssl=true -Drocketmq.namesrv.domain=172.30.50.54 -Dlog.home=/home/storm/logs");
+
+
+                config.put(Config.TOPOLOGY_WORKER_CHILDOPTS, getWorkerChildOpts(config));
 
                 //debug
                 config.remove(ConfigUtils.CONFIG_ROCKETMQ);
@@ -85,5 +87,22 @@ public class SimpleTopology {
         } catch (Exception e) {
             LOG.error(e.getMessage(), e.getCause());
         }
+    }
+
+    private static String getWorkerChildOpts(Config config) {
+        StringBuilder stringBuilder = new StringBuilder();
+        if ("true".equals(config.get("rocketmq.enable_ssl"))) {
+            stringBuilder.append("-Denable_ssl=true ");
+        }
+
+        if (null != config.get("rocketmq.namesrv.domain")) {
+            stringBuilder.append("-Drocketmq.namesrv.domain=").append(config.get("rocketmq.namesrv.domain")).append(" ");
+        }
+
+        if (null != config.get("rocketmq.log.home")) {
+            stringBuilder.append("-Dlog.home=").append(config.get("rocketmq.log.home")).append(" ");
+        }
+
+        return stringBuilder.toString();
     }
 }
