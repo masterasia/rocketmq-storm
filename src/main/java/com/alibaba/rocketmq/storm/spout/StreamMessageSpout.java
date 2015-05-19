@@ -101,7 +101,7 @@ public class StreamMessageSpout extends BatchMessageSpout {
             String messageId = cacheItem.getMsg().getMsgId();
             collector.emit(values, messageId);
 
-            LOG.debug("Emitted tuple {},mssageId is {}!", values, messageId);
+            LOG.debug("Emitted tuple {}, messageId is {}!", values, messageId);
             return;
         }
 
