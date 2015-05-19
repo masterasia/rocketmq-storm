@@ -101,7 +101,7 @@ public class StreamMessageSpout extends BatchMessageSpout {
             String messageId = cacheItem.getMsg().getMsgId();
             collector.emit(values, messageId);
 
-            LOG.debug("Emited tuple {},mssageId is {}!", values, messageId);
+            LOG.debug("Emitted tuple {},mssageId is {}!", values, messageId);
             return;
         }
 
@@ -176,7 +176,7 @@ public class StreamMessageSpout extends BatchMessageSpout {
     }
 
     public void declareOutputFields(final OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("MessageExt"));
+        declarer.declare(new Fields("MessageExt", "MessageStat"));
     }
 
     public static class BatchMsgsTag {
