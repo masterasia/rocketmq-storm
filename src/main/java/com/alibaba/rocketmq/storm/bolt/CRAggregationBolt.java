@@ -33,7 +33,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
     private OutputCollector collector;
 
-    private transient ReadWriteLock lock = new ReentrantReadWriteLock();
+    private ReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * We use one worker, one executor and one task strategy.
