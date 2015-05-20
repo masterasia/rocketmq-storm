@@ -141,7 +141,6 @@ public class CRAggregationBolt implements IRichBolt, Constant {
         public void run() {
             while (!stop) {
                 LOG.info("Start to persist aggregation result.");
-
                 try {
                     HashMap<String, HashMap<String, HashMap<String, Long>>> map =
                             atomicReference.getAndSet(new HashMap<String, HashMap<String, HashMap<String, Long>>>());
@@ -184,9 +183,14 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                         }
                     }
                     LOG.info("Persisting aggregation result done.");
-                    Thread.sleep(PERIOD * 1000);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOG.error("Persistence of aggregated result failed.", e);
+                } finally {
+                    try {
+                        Thread.sleep(PERIOD * 1000);
+                    } catch (InterruptedException e) {
+                        LOG.error("PersistThread was interrupted.", e);
+                    }
                 }
             }
         }
