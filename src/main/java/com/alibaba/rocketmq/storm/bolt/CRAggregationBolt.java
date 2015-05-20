@@ -148,45 +148,55 @@ public class CRAggregationBolt implements IRichBolt, Constant {
         @Override
         public void run() {
             LOG.info("Start to persist aggregation result.");
-            HashMap<String, HashMap<String, HashMap<String, Long>>> map =
-                    atomicReference.getAndSet(new HashMap<String, HashMap<String, HashMap<String, Long>>>());
-            Calendar calendar = Calendar.getInstance();
-            //Use Beijing Time Zone: GMT+8
-            calendar.setTimeZone(TimeZone.getTimeZone("GMT+8"));
-            DateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT);
 
-            //TODO persist map
-            for (Map.Entry<String, HashMap<String, HashMap<String, Long>>> row : map.entrySet()) {
-                String offerId = row.getKey();
-                HashMap<String, HashMap<String, Long>> affMap = row.getValue();
-                for (Map.Entry<String, HashMap<String, Long>> affRow : affMap.entrySet()) {
-                    String affId = affRow.getKey();
-                    HashMap<String, Long> eventMap = affRow.getValue();
-                    String key = offerId + "_" + affId + "_" +  dateFormatter.format(calendar.getTime());
-                    StringBuilder click = new StringBuilder();
-                    click.append("{");
+            try {
+                HashMap<String, HashMap<String, HashMap<String, Long>>> map =
+                        atomicReference.getAndSet(new HashMap<String, HashMap<String, HashMap<String, Long>>>());
 
-                    StringBuilder conversion = new StringBuilder();
-                    conversion.append("{");
-                    for (Map.Entry<String, Long> eventRow : eventMap.entrySet()) {
-                        String event = eventRow.getKey();
-                        if (event.startsWith("C")) {
-                            click.append(event).append(": ").append(eventRow.getValue()).append(", ");
-                        } else {
-                            conversion.append(event).append(": ").append(eventRow.getValue()).append(", ");
-                        }
-                    }
-
-                    click.replace(click.length() - 2, click.length()-1, "}");
-                    conversion.replace(click.length() - 2, click.length()-1, "}");
-
-
-                    LOG.info("[Click] Key = " + click.toString());
-                    LOG.info("[Conversion] Key = " + conversion.toString());
-
-                    cacheManager.setKeyLive(key, PERIOD * NUMBERS, "{click: " + click + ", conversion: " + conversion + "}");
+                if (null == map || map.isEmpty()) {
+                    return;
                 }
 
+                Calendar calendar = Calendar.getInstance();
+                //Use Beijing Time Zone: GMT+8
+                calendar.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+                DateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT);
+
+                //TODO persist map
+                for (Map.Entry<String, HashMap<String, HashMap<String, Long>>> row : map.entrySet()) {
+                    String offerId = row.getKey();
+                    HashMap<String, HashMap<String, Long>> affMap = row.getValue();
+                    for (Map.Entry<String, HashMap<String, Long>> affRow : affMap.entrySet()) {
+                        String affId = affRow.getKey();
+                        HashMap<String, Long> eventMap = affRow.getValue();
+                        String key = offerId + "_" + affId + "_" +  dateFormatter.format(calendar.getTime());
+                        StringBuilder click = new StringBuilder();
+                        click.append("{");
+
+                        StringBuilder conversion = new StringBuilder();
+                        conversion.append("{");
+                        for (Map.Entry<String, Long> eventRow : eventMap.entrySet()) {
+                            String event = eventRow.getKey();
+                            if (event.startsWith("C")) {
+                                click.append(event).append(": ").append(eventRow.getValue()).append(", ");
+                            } else {
+                                conversion.append(event).append(": ").append(eventRow.getValue()).append(", ");
+                            }
+                        }
+
+                        click.replace(click.length() - 2, click.length()-1, "}");
+                        conversion.replace(click.length() - 2, click.length()-1, "}");
+
+
+                        LOG.info("[Click] Key = " + click.toString());
+                        LOG.info("[Conversion] Key = " + conversion.toString());
+
+                        cacheManager.setKeyLive(key, PERIOD * NUMBERS, "{click: " + click + ", conversion: " + conversion + "}");
+                    }
+
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
             LOG.info("Persisting aggregation result done.");
