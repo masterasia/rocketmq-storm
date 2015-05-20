@@ -22,12 +22,13 @@ public class TestCacheManager {
     @Test
     public void set() {
         Map<String, String> kValues = new HashMap<String, String>();
+        long times = System.currentTimeMillis();
         kValues.put("testKey", "robert");
-        kValues.put("1", "1");
-        kValues.put("2", "2");
-        kValues.put("3", "3");
-        kValues.put("4", "4");
-        cacheManager.append("4", "four");
+        kValues.put("1_1_"+times, "1");
+        kValues.put("1_2_"+times, "2");
+        kValues.put("1_3_"+times, "3");
+        kValues.put("1_4_"+times, "4");
+        cacheManager.append("1_4_"+times, "four");
 
         cacheManager.set(kValues);
         System.out.println(cacheManager.getValue("4"));

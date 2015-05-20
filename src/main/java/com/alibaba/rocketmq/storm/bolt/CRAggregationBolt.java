@@ -9,6 +9,8 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.rocketmq.common.ThreadFactoryImpl;
 import com.alibaba.rocketmq.common.message.MessageExt;
 import com.alibaba.rocketmq.storm.model.CRLog;
+import com.alibaba.rocketmq.storm.redis.CacheManager;
+import com.alibaba.rocketmq.storm.redis.Constant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,12 +26,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * @author Li Zhanhui
  */
-public class CRAggregationBolt implements IRichBolt {
-    private static final long   serialVersionUID = 7591260982890048043L;
+public class CRAggregationBolt implements IRichBolt, Constant {
+    private static final long serialVersionUID = 7591260982890048043L;
 
-    private static final Logger LOG              = LoggerFactory.getLogger(CRAggregationBolt.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CRAggregationBolt.class);
 
-    private OutputCollector     collector;
+    private OutputCollector collector;
 
     private transient ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -52,7 +54,7 @@ public class CRAggregationBolt implements IRichBolt {
             public void run() {
                 executorService.schedule(new PersistTask(), 0, TimeUnit.MILLISECONDS);
             }
-        }, 30, 30, TimeUnit.SECONDS);
+        }, PERIOD, PERIOD, TimeUnit.SECONDS);
     }
 
     @Override
@@ -62,7 +64,7 @@ public class CRAggregationBolt implements IRichBolt {
 
         try {
             if (msgObj instanceof MessageExt) {
-                MessageExt msg = (MessageExt)msgObj;
+                MessageExt msg = (MessageExt) msgObj;
                 CRLog logEntry = JSON.parseObject(new String(msg.getBody(), Charset.forName("UTF-8")), CRLog.class);
 
                 lock.writeLock().lockInterruptibly();
@@ -70,7 +72,7 @@ public class CRAggregationBolt implements IRichBolt {
                 if (!resultMap.containsKey(logEntry.getOffer_id())) {
                     HashMap<String, HashMap<String, Long>> affMap = new HashMap<>();
                     HashMap<String, Long> eventMap = new HashMap<>();
-                    eventMap.put(logEntry.getEvent_code(), 1L);
+                    eventMap.put(logEntry.getEvent_code(), BASE);
                     affMap.put(logEntry.getAffiliate_id(), eventMap);
                     resultMap.put(logEntry.getOffer_id(), affMap);
                 } else {
@@ -79,13 +81,13 @@ public class CRAggregationBolt implements IRichBolt {
                         HashMap<String, Long> eventMap = affMap.get(logEntry.getAffiliate_id());
                         String eventCode = logEntry.getEvent_code();
                         if (eventMap.containsKey(eventCode)) {
-                            eventMap.put(eventCode, eventMap.get(eventCode) + 1);
+                            eventMap.put(eventCode, eventMap.get(eventCode) + INCREMENT);
                         } else {
-                            eventMap.put(logEntry.getEvent_code(), 1L);
+                            eventMap.put(logEntry.getEvent_code(), BASE);
                         }
                     } else {
                         HashMap<String, Long> eventMap = new HashMap<>();
-                        eventMap.put(logEntry.getEvent_code(), 1L);
+                        eventMap.put(logEntry.getEvent_code(), BASE);
                         affMap.put(logEntry.getAffiliate_id(), eventMap);
                     }
                 }
@@ -118,6 +120,8 @@ public class CRAggregationBolt implements IRichBolt {
 
     class PersistTask implements Runnable {
 
+        CacheManager cacheManager = CacheManager.getInstance();
+
         public PersistTask() {
         }
 
@@ -141,13 +145,14 @@ public class CRAggregationBolt implements IRichBolt {
                 for (Map.Entry<String, HashMap<String, Long>> affRow : affMap.entrySet()) {
                     String affId = affRow.getKey();
                     HashMap<String, Long> eventMap = affRow.getValue();
-
+                    String key = offerId + "_" + affId;
                     StringBuilder click = new StringBuilder();
-                    click.append(offerId).append("_").append(affId).append(": {");
+                    click.append(key).append(": {");
 
                     StringBuilder conversion = new StringBuilder();
-                    conversion.append(offerId).append("_").append(affId).append(": {");
+                    conversion.append(key).append(": {");
 
+                    StringBuilder values = new StringBuilder();
                     for (Map.Entry<String, Long> eventRow : eventMap.entrySet()) {
                         String event = eventRow.getKey();
                         if (event.startsWith("C")) {
@@ -155,10 +160,13 @@ public class CRAggregationBolt implements IRichBolt {
                         } else {
                             conversion.append(event).append(": ").append(eventRow.getValue()).append(", ");
                         }
+
+                        values.append(event).append(": ").append(eventRow.getValue()).append(", ");
                     }
 
                     LOG.info(click.substring(0, click.length() - 2) + "}");
                     LOG.info(conversion.substring(0, click.length() - 2) + "}");
+                    cacheManager.setKeyLive(key + "_" + System.currentTimeMillis(), PERIOD * NUMBERS, values.substring(0, click.length() - 2));
                 }
 
             }
