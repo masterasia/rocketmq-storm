@@ -175,8 +175,19 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                                     conversion.append(event).append(": ").append(eventRow.getValue()).append(", ");
                                 }
                             }
-                            click.replace(click.length() - 2, click.length(), "}");
-                            conversion.replace(conversion.length() - 2, conversion.length(), "}");
+
+                            if (click.length() > 2) {
+                                click.replace(click.length() - 2, click.length(), "}");
+                            } else {
+                                click.append("}");
+                            }
+
+                            if (conversion.length() > 2) {
+                                conversion.replace(conversion.length() - 2, conversion.length(), "}");
+                            } else {
+                                conversion.append("}");
+                            }
+
                             LOG.info("[Click] Key = " + click.toString());
                             LOG.info("[Conversion] Key = " + conversion.toString());
                             cacheManager.setKeyLive(key, PERIOD * NUMBERS, "{click: " + click + ", conversion: " + conversion + "}");
