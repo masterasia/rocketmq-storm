@@ -101,11 +101,13 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                 LOG.error("The first value in tuple should be MessageExt object");
             }
         } catch (Exception e) {
+            LOG.error("Failed to handle Message", e);
             collector.fail(input);
             return;
         } finally {
             lock.writeLock().unlock();
         }
+
         collector.ack(input);
     }
 

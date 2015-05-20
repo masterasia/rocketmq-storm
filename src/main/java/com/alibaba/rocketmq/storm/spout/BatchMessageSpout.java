@@ -40,8 +40,7 @@ import com.google.common.collect.MapMaker;
 public class BatchMessageSpout implements IRichSpout {
     private static final long                   serialVersionUID = 4641537253577312163L;
 
-    private static final Logger                 LOG              = LoggerFactory
-                                                                         .getLogger(BatchMessageSpout.class);
+    private static final Logger                 LOG              = LoggerFactory.getLogger(BatchMessageSpout.class);
     protected RocketMQConfig                    config;
 
     protected MessageConsumer                   mqClient;
@@ -220,8 +219,6 @@ public class BatchMessageSpout implements IRichSpout {
     }
 
     public boolean consumeMessage(List<MessageExt> msgs, MessageQueue mq) {
-        LOG.info("Receiving {} messages {} from MQ {}", new Object[] { msgs.size(), msgs, mq });
-
         if (msgs == null || msgs.isEmpty()) {
             return true;
         }
