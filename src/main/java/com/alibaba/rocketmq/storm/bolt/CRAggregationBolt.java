@@ -15,8 +15,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +38,8 @@ public class CRAggregationBolt implements IRichBolt, Constant {
     private OutputCollector collector;
 
     private ReadWriteLock lock = new ReentrantReadWriteLock();
+
+    private static final String DATE_FORMAT = "yyyyMMddHHmm";
 
     /**
      * We use one worker, one executor and one task strategy.
@@ -94,7 +100,6 @@ public class CRAggregationBolt implements IRichBolt, Constant {
             } else {
                 LOG.error("The first value in tuple should be MessageExt object");
             }
-            LOG.info("Messages:" + msgObj + "\n statistics:" + msgStat);
         } catch (Exception e) {
             collector.fail(input);
             return;
@@ -138,6 +143,11 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                 lock.writeLock().unlock();
             }
 
+            Calendar calendar = Calendar.getInstance();
+            //Use Beijing Time Zone: GMT+8
+            calendar.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+            DateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT);
+
             //TODO persist map
             for (Map.Entry<String, HashMap<String, HashMap<String, Long>>> row : map.entrySet()) {
                 String offerId = row.getKey();
@@ -145,12 +155,12 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                 for (Map.Entry<String, HashMap<String, Long>> affRow : affMap.entrySet()) {
                     String affId = affRow.getKey();
                     HashMap<String, Long> eventMap = affRow.getValue();
-                    String key = offerId + "_" + affId;
+                    String key = offerId + "_" + affId + "_" +  dateFormatter.format(calendar.getTime());
                     StringBuilder click = new StringBuilder();
-                    click.append(key).append(": {");
+                    click.append("{");
 
                     StringBuilder conversion = new StringBuilder();
-                    conversion.append(key).append(": {");
+                    conversion.append("{");
 
                     StringBuilder values = new StringBuilder();
                     for (Map.Entry<String, Long> eventRow : eventMap.entrySet()) {
@@ -160,13 +170,16 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                         } else {
                             conversion.append(event).append(": ").append(eventRow.getValue()).append(", ");
                         }
-
-                        values.append(event).append(": ").append(eventRow.getValue()).append(", ");
                     }
 
-                    LOG.info(click.substring(0, click.length() - 2) + "}");
-                    LOG.info(conversion.substring(0, click.length() - 2) + "}");
-                    cacheManager.setKeyLive(key + "_" + System.currentTimeMillis(), PERIOD * NUMBERS, values.substring(0, click.length() - 2));
+                    click.replace(click.length() - 2, click.length()-1, "}");
+                    conversion.replace(click.length() - 2, click.length()-1, "}");
+
+
+                    LOG.info("[Click] Key = " + click.toString());
+                    LOG.info("[Conversion] Key = " + conversion.toString());
+
+                    cacheManager.setKeyLive(key, PERIOD * NUMBERS, "{click: " + click + ", conversion: " + conversion + "}");
                 }
 
             }

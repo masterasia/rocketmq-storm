@@ -1,8 +1,5 @@
 package com.alibaba.rocketmq.storm.redis;
 
-/**
- * Created by robert on 2015/5/20.
- */
 public interface Constant {
     int PERIOD = 30;
 
