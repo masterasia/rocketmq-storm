@@ -6,7 +6,6 @@ import backtype.storm.topology.IRichBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.rocketmq.common.ThreadFactoryImpl;
 import com.alibaba.rocketmq.common.message.MessageExt;
 import com.alibaba.rocketmq.storm.model.CRLog;
 import com.alibaba.rocketmq.storm.redis.CacheManager;
@@ -21,9 +20,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -50,6 +46,8 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
     private AtomicLong counter = new AtomicLong(1L);
 
+    private volatile boolean stop = false;
+
     @Override
     public void prepare(@SuppressWarnings("rawtypes") Map stormConf, TopologyContext context,
                         OutputCollector collector) {
@@ -64,16 +62,10 @@ public class CRAggregationBolt implements IRichBolt, Constant {
         while (!atomicReference.compareAndSet(null, resultMap)) {
         }
 
-        final ScheduledExecutorService executorService =
-                new ScheduledThreadPoolExecutor(2, new ThreadFactoryImpl("PersistThread"),
-                        new ScheduledThreadPoolExecutor.CallerRunsPolicy());
-
-        executorService.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                executorService.schedule(new PersistTask(), 0, TimeUnit.MILLISECONDS);
-            }
-        }, PERIOD, PERIOD, TimeUnit.SECONDS);
+        Thread persistThread = new Thread(new PersistTask());
+        persistThread.setName("PersistThread");
+        persistThread.setDaemon(true);
+        persistThread.start();
     }
 
     @Override
@@ -126,6 +118,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
     @Override
     public void cleanup() {
+        stop = true;
     }
 
     @Override
@@ -139,67 +132,63 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
 
     class PersistTask implements Runnable {
-
-        CacheManager cacheManager = CacheManager.getInstance();
+        private final CacheManager cacheManager = CacheManager.getInstance();
 
         public PersistTask() {
         }
 
         @Override
         public void run() {
-            LOG.info("Start to persist aggregation result.");
+            while (!stop) {
+                LOG.info("Start to persist aggregation result.");
 
-            try {
-                HashMap<String, HashMap<String, HashMap<String, Long>>> map =
-                        atomicReference.getAndSet(new HashMap<String, HashMap<String, HashMap<String, Long>>>());
+                try {
+                    HashMap<String, HashMap<String, HashMap<String, Long>>> map =
+                            atomicReference.getAndSet(new HashMap<String, HashMap<String, HashMap<String, Long>>>());
 
-                if (null == map || map.isEmpty()) {
-                    return;
-                }
-
-                Calendar calendar = Calendar.getInstance();
-                //Use Beijing Time Zone: GMT+8
-                calendar.setTimeZone(TimeZone.getTimeZone("GMT+8"));
-                DateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT);
-
-                //TODO persist map
-                for (Map.Entry<String, HashMap<String, HashMap<String, Long>>> row : map.entrySet()) {
-                    String offerId = row.getKey();
-                    HashMap<String, HashMap<String, Long>> affMap = row.getValue();
-                    for (Map.Entry<String, HashMap<String, Long>> affRow : affMap.entrySet()) {
-                        String affId = affRow.getKey();
-                        HashMap<String, Long> eventMap = affRow.getValue();
-                        String key = offerId + "_" + affId + "_" +  dateFormatter.format(calendar.getTime());
-                        StringBuilder click = new StringBuilder();
-                        click.append("{");
-
-                        StringBuilder conversion = new StringBuilder();
-                        conversion.append("{");
-                        for (Map.Entry<String, Long> eventRow : eventMap.entrySet()) {
-                            String event = eventRow.getKey();
-                            if (event.startsWith("C")) {
-                                click.append(event).append(": ").append(eventRow.getValue()).append(", ");
-                            } else {
-                                conversion.append(event).append(": ").append(eventRow.getValue()).append(", ");
-                            }
-                        }
-
-                        click.replace(click.length() - 2, click.length()-1, "}");
-                        conversion.replace(click.length() - 2, click.length()-1, "}");
-
-
-                        LOG.info("[Click] Key = " + click.toString());
-                        LOG.info("[Conversion] Key = " + conversion.toString());
-
-                        cacheManager.setKeyLive(key, PERIOD * NUMBERS, "{click: " + click + ", conversion: " + conversion + "}");
+                    if (null == map || map.isEmpty()) {
+                        continue;
                     }
 
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+                    Calendar calendar = Calendar.getInstance();
+                    //Use Beijing Time Zone: GMT+8
+                    calendar.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+                    DateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT);
 
-            LOG.info("Persisting aggregation result done.");
+                    //TODO persist map
+                    for (Map.Entry<String, HashMap<String, HashMap<String, Long>>> row : map.entrySet()) {
+                        String offerId = row.getKey();
+                        HashMap<String, HashMap<String, Long>> affMap = row.getValue();
+                        for (Map.Entry<String, HashMap<String, Long>> affRow : affMap.entrySet()) {
+                            String affId = affRow.getKey();
+                            HashMap<String, Long> eventMap = affRow.getValue();
+                            String key = offerId + "_" + affId + "_" +  dateFormatter.format(calendar.getTime());
+                            StringBuilder click = new StringBuilder();
+                            click.append("{");
+
+                            StringBuilder conversion = new StringBuilder();
+                            conversion.append("{");
+                            for (Map.Entry<String, Long> eventRow : eventMap.entrySet()) {
+                                String event = eventRow.getKey();
+                                if (event.startsWith("C")) {
+                                    click.append(event).append(": ").append(eventRow.getValue()).append(", ");
+                                } else {
+                                    conversion.append(event).append(": ").append(eventRow.getValue()).append(", ");
+                                }
+                            }
+                            click.replace(click.length() - 2, click.length()-1, "}");
+                            conversion.replace(click.length() - 2, click.length()-1, "}");
+                            LOG.info("[Click] Key = " + click.toString());
+                            LOG.info("[Conversion] Key = " + conversion.toString());
+                            cacheManager.setKeyLive(key, PERIOD * NUMBERS, "{click: " + click + ", conversion: " + conversion + "}");
+                        }
+                    }
+                    LOG.info("Persisting aggregation result done.");
+                    Thread.sleep(PERIOD * 1000);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }
