@@ -71,7 +71,6 @@ public class SimpleTopology {
             } else {
                 config.put(Config.STORM_CLUSTER_MODE, "distributed");
 
-
                 config.put(Config.TOPOLOGY_WORKER_CHILDOPTS, getWorkerChildOpts(config));
 
                 //debug
