@@ -39,7 +39,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
     private OutputCollector collector;
 
-    private static final String DATE_FORMAT = "yyyyMMddHHmm";
+    private static final String DATE_FORMAT = "yyyyMMddHHmmss";
 
     private AtomicReference<HashMap<String, HashMap<String, HashMap<String, Long>>>>
             atomicReference = new AtomicReference<>();
