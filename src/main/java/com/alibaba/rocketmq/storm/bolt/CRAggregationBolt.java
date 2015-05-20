@@ -24,6 +24,7 @@ import java.util.TimeZone;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -46,6 +47,8 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
     private AtomicReference<HashMap<String, HashMap<String, HashMap<String, Long>>>>
             atomicReference = new AtomicReference<>();
+
+    private AtomicLong counter = new AtomicLong(1L);
 
     @Override
     public void prepare(@SuppressWarnings("rawtypes") Map stormConf, TopologyContext context,
@@ -75,9 +78,13 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
     @Override
     public void execute(Tuple input) {
+
+        if (counter.incrementAndGet() % 10000 == 0) {
+            LOG.info("10000 tuples aggregated.");
+        }
+
         Object msgObj = input.getValue(0);
         Object msgStat = input.getValue(1);
-
         try {
             if (msgObj instanceof MessageExt) {
                 MessageExt msg = (MessageExt) msgObj;
@@ -140,6 +147,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
         @Override
         public void run() {
+            LOG.info("Start to persist aggregation result.");
             HashMap<String, HashMap<String, HashMap<String, Long>>> map =
                     atomicReference.getAndSet(new HashMap<String, HashMap<String, HashMap<String, Long>>>());
             Calendar calendar = Calendar.getInstance();
@@ -180,6 +188,8 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                 }
 
             }
+
+            LOG.info("Persisting aggregation result done.");
         }
     }
 }
