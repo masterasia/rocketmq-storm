@@ -40,14 +40,14 @@ public class CRAggregationBolt implements IRichBolt, Constant {
      */
     private HashMap<String /* offer_id */, HashMap<String /* affiliate_id*/, HashMap<String /* event_code*/, Long>>> resultMap = new HashMap<>();
 
-    private transient ScheduledExecutorService executorService =
-            new ScheduledThreadPoolExecutor(2, new ThreadFactoryImpl("PersistThread"),
-                    new ScheduledThreadPoolExecutor.CallerRunsPolicy());
-
     @Override
     public void prepare(@SuppressWarnings("rawtypes") Map stormConf, TopologyContext context,
                         OutputCollector collector) {
         this.collector = collector;
+
+        final ScheduledExecutorService executorService =
+                new ScheduledThreadPoolExecutor(2, new ThreadFactoryImpl("PersistThread"),
+                        new ScheduledThreadPoolExecutor.CallerRunsPolicy());
 
         executorService.scheduleAtFixedRate(new Runnable() {
             @Override
