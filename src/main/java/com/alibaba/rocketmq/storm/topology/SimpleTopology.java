@@ -23,7 +23,7 @@ import com.alibaba.rocketmq.storm.spout.factory.RocketMQSpoutFactory;
 public class SimpleTopology {
     private static final Logger LOG            = LoggerFactory.getLogger(SimpleTopology.class);
 
-    private static final String BOLT_NAME      = "MQBolt";
+    private static final String BOLT_NAME      = "CRAggregationMQBolt";
     private static final String PROP_FILE_NAME = "mqspout.default.prop";
 
     private static Config       config         = null;

@@ -73,7 +73,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                 MessageExt msg = (MessageExt) msgObj;
                 CRLog logEntry = JSON.parseObject(new String(msg.getBody(), Charset.forName("UTF-8")), CRLog.class);
 
-                lock.writeLock().lockInterruptibly();
+                lock.writeLock().lock();
 
                 if (!resultMap.containsKey(logEntry.getOffer_id())) {
                     HashMap<String, HashMap<String, Long>> affMap = new HashMap<>();
@@ -136,14 +136,16 @@ public class CRAggregationBolt implements IRichBolt, Constant {
         public void run() {
 
             HashMap<String /* offer_id */, HashMap<String /* affiliate_id*/, HashMap<String /* event_code*/, Long>>> map = resultMap;
-            try {
-                lock.writeLock().lockInterruptibly();
-                resultMap = new HashMap<>();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                lock.writeLock().unlock();
-            }
+
+            resultMap = new HashMap<>();
+
+//            try {
+//                lock.writeLock().lockInterruptibly();
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            } finally {
+//                lock.writeLock().unlock();
+//            }
 
             Calendar calendar = Calendar.getInstance();
             //Use Beijing Time Zone: GMT+8
@@ -163,8 +165,6 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
                     StringBuilder conversion = new StringBuilder();
                     conversion.append("{");
-
-                    StringBuilder values = new StringBuilder();
                     for (Map.Entry<String, Long> eventRow : eventMap.entrySet()) {
                         String event = eventRow.getKey();
                         if (event.startsWith("C")) {
