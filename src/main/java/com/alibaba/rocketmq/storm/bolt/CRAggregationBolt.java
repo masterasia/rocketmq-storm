@@ -25,10 +25,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
+ * <p>
+ *     To aggregate CR grouping by offer ID, affiliate ID, event code.
+ * </p>
+ *
+ * @version 1.0
+ * @since 1.0
  * @author Li Zhanhui
  */
 public class CRAggregationBolt implements IRichBolt, Constant {
@@ -37,8 +41,6 @@ public class CRAggregationBolt implements IRichBolt, Constant {
     private static final Logger LOG = LoggerFactory.getLogger(CRAggregationBolt.class);
 
     private OutputCollector collector;
-
-    private ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private static final String DATE_FORMAT = "yyyyMMddHHmm";
 
@@ -110,8 +112,6 @@ public class CRAggregationBolt implements IRichBolt, Constant {
             LOG.error("Failed to handle Message", e);
             collector.fail(input);
             return;
-        } finally {
-            lock.writeLock().unlock();
         }
 
         collector.ack(input);
