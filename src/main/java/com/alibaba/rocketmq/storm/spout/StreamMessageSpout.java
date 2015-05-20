@@ -56,6 +56,7 @@ public class StreamMessageSpout extends BatchMessageSpout {
             }
 
         };
+
         msgCache = new RotatingMap<String, MessageCacheItem>(3600 * 5, callback);
 
         LOG.info("Topology {} opened {} spout successfully!",
@@ -100,8 +101,6 @@ public class StreamMessageSpout extends BatchMessageSpout {
             Values values = new Values(cacheItem.getMsg(), cacheItem.getMsgStat());
             String messageId = cacheItem.getMsg().getMsgId();
             collector.emit(values, messageId);
-
-            LOG.debug("Emitted tuple {}, messageId is {}!", values, messageId);
             return;
         }
 
@@ -175,6 +174,11 @@ public class StreamMessageSpout extends BatchMessageSpout {
         }
     }
 
+    /**
+     * Declare output fields for Bolt.
+     *
+     * @param declarer Instance of {@link OutputFieldsDeclarer}
+     */
     public void declareOutputFields(final OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields("MessageExt", "MessageStat"));
     }
