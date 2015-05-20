@@ -24,6 +24,7 @@ import java.util.TimeZone;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -41,15 +42,22 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
     private static final String DATE_FORMAT = "yyyyMMddHHmm";
 
-    /**
-     * We use one worker, one executor and one task strategy.
-     */
-    private HashMap<String /* offer_id */, HashMap<String /* affiliate_id*/, HashMap<String /* event_code*/, Long>>> resultMap = new HashMap<>();
+    private AtomicReference<HashMap<String, HashMap<String, HashMap<String, Long>>>>
+            atomicReference = new AtomicReference<>();
 
     @Override
     public void prepare(@SuppressWarnings("rawtypes") Map stormConf, TopologyContext context,
                         OutputCollector collector) {
         this.collector = collector;
+
+        /**
+         * We use one worker, one executor and one task strategy.
+         */
+        HashMap<String /* offer_id */, HashMap<String /* affiliate_id*/, HashMap<String /* event_code*/, Long>>>
+                resultMap = new HashMap<>();
+
+        while (!atomicReference.compareAndSet(null, resultMap)) {
+        }
 
         final ScheduledExecutorService executorService =
                 new ScheduledThreadPoolExecutor(2, new ThreadFactoryImpl("PersistThread"),
@@ -72,17 +80,15 @@ public class CRAggregationBolt implements IRichBolt, Constant {
             if (msgObj instanceof MessageExt) {
                 MessageExt msg = (MessageExt) msgObj;
                 CRLog logEntry = JSON.parseObject(new String(msg.getBody(), Charset.forName("UTF-8")), CRLog.class);
-
-                lock.writeLock().lock();
-
-                if (!resultMap.containsKey(logEntry.getOffer_id())) {
+                HashMap<String, HashMap<String, HashMap<String, Long>>> map = atomicReference.get();
+                if (!map.containsKey(logEntry.getOffer_id())) {
                     HashMap<String, HashMap<String, Long>> affMap = new HashMap<>();
                     HashMap<String, Long> eventMap = new HashMap<>();
                     eventMap.put(logEntry.getEvent_code(), BASE);
                     affMap.put(logEntry.getAffiliate_id(), eventMap);
-                    resultMap.put(logEntry.getOffer_id(), affMap);
+                    map.put(logEntry.getOffer_id(), affMap);
                 } else {
-                    HashMap<String, HashMap<String, Long>> affMap = resultMap.get(logEntry.getOffer_id());
+                    HashMap<String, HashMap<String, Long>> affMap = map.get(logEntry.getOffer_id());
                     if (affMap.containsKey(logEntry.getAffiliate_id())) {
                         HashMap<String, Long> eventMap = affMap.get(logEntry.getAffiliate_id());
                         String eventCode = logEntry.getEvent_code();
@@ -134,19 +140,8 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
         @Override
         public void run() {
-
-            HashMap<String /* offer_id */, HashMap<String /* affiliate_id*/, HashMap<String /* event_code*/, Long>>> map = resultMap;
-
-            resultMap = new HashMap<>();
-
-//            try {
-//                lock.writeLock().lockInterruptibly();
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            } finally {
-//                lock.writeLock().unlock();
-//            }
-
+            HashMap<String, HashMap<String, HashMap<String, Long>>> map =
+                    atomicReference.getAndSet(new HashMap<String, HashMap<String, HashMap<String, Long>>>());
             Calendar calendar = Calendar.getInstance();
             //Use Beijing Time Zone: GMT+8
             calendar.setTimeZone(TimeZone.getTimeZone("GMT+8"));
