@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by robert on 2015/5/20.
@@ -46,6 +47,14 @@ public class TestCacheManager {
         String value = cacheManager.getValue("testKey");
         Assert.assertNotNull(value);
         Assert.assertEquals("robert", value);
+    }
+
+    @Test
+    public void getKeys(){
+        Set<String> keys = cacheManager.getKeys("1_*");
+        for (String key:keys) {
+            System.out.println(cacheManager.getValues(key));
+        }
     }
 
     @Test

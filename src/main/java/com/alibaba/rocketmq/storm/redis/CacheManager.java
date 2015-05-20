@@ -4,6 +4,7 @@ import redis.clients.jedis.Jedis;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by robert on 2015/5/20.
@@ -56,6 +57,10 @@ public class CacheManager {
 
     public List<String> getValues(String... keys) {
         return jedis.mget(keys);
+    }
+
+    public Set<String> getKeys(String pattern){
+        return jedis.keys(pattern);
     }
 
     public Long deleteValue(String key) {
