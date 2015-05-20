@@ -150,6 +150,11 @@
 			<version>${jmockit.version}</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
+			<version>2.7.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
