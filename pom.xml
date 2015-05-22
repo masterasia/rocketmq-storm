@@ -29,6 +29,12 @@
 			<url>http://clojars.org/repo</url>
 		</repository>
 
+
+		<repository>
+			<id> cloudera</id>
+			<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+		</repository>
+
 		<repository>
 			<id>Local Nexus Repository</id>
 			<url>http://172.30.10.200:8081/nexus/content/repositories/releases/</url>
@@ -36,6 +42,7 @@
 	</repositories>
 
 	<properties>
+
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<storm.version>0.9.3</storm.version>
@@ -154,6 +161,26 @@
 			<groupId>redis.clients</groupId>
 			<artifactId>jedis</artifactId>
 			<version>2.7.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId> hadoop-client</artifactId>
+			<version>2.3.0-cdh5.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hbase</groupId>
+			<artifactId>hbase-common</artifactId>
+			<version>0.98.6-cdh5.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hbase</groupId>
+			<artifactId>hbase-client</artifactId>
+			<version>0.98.6-cdh5.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hbase</groupId>
+			<artifactId>hbase-server</artifactId>
+			<version>0.98.6-cdh5.2.0</version>
 		</dependency>
 	</dependencies>
 
