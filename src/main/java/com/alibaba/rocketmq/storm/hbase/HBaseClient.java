@@ -51,7 +51,7 @@ public class HBaseClient {
         Thread reloginThread = new Thread() {
             @Override
             public void run() {
-                while (HBaseClientStatus.TERMINATED != status) {
+                while (HBaseClientStatus.STARTING == status || HBaseClientStatus.STARTED == status) {
                     try {
                         SecurityUtil.login(conf, KEYTAB_CONF, KEYTAB_USER);
                         Thread.sleep(ELEVEN_MINUTES);
