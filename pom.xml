@@ -31,7 +31,7 @@
 
 
 		<repository>
-			<id> cloudera</id>
+			<id>cloudera</id>
 			<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
 		</repository>
 
@@ -164,7 +164,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
-			<artifactId> hadoop-client</artifactId>
+			<artifactId>hadoop-client</artifactId>
 			<version>2.3.0-cdh5.0.2</version>
 		</dependency>
 		<dependency>
@@ -177,11 +177,15 @@
 			<artifactId>hbase-client</artifactId>
 			<version>0.98.6-cdh5.2.0</version>
 		</dependency>
+
+		<!--
 		<dependency>
 			<groupId>org.apache.hbase</groupId>
 			<artifactId>hbase-server</artifactId>
 			<version>0.98.6-cdh5.2.0</version>
 		</dependency>
+		-->
+
 	</dependencies>
 
 	<build>
