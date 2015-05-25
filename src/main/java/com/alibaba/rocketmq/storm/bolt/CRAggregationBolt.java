@@ -42,6 +42,12 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
     private static final String TABLE_NAME = "eagle_log";
 
+    private static final String COLUMN_FAMILY = "t";
+
+    private static final String COLUMN_CLICK = "click";
+    private static final String COLUMN_CONVERSION = "conv";
+    private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
+
     private AtomicReference<HashMap<String, HashMap<String, HashMap<String, Long>>>>
             atomicReference = new AtomicReference<>();
 
@@ -195,10 +201,13 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                                 conversion.append("}");
                             }
 
-                            LOG.info("[Click] Key = " + click.toString());
-                            LOG.info("[Conversion] Key = " + conversion.toString());
+                            LOG.debug("[Click] Key = " + click.toString());
+                            LOG.debug("[Conversion] Key = " + conversion.toString());
+
+                            data.put(COLUMN_CLICK, click.toString().getBytes(DEFAULT_CHARSET));
+                            data.put(COLUMN_CONVERSION, conversion.toString().getBytes(DEFAULT_CHARSET));
                             cacheManager.setKeyLive(key, PERIOD * NUMBERS, "{click: " + click + ", conversion: " + conversion + "}");
-                            HBaseData hBaseData = new HBaseData(TABLE_NAME, rowKey, "t", data);
+                            HBaseData hBaseData = new HBaseData(TABLE_NAME, rowKey, COLUMN_FAMILY, data);
                             hBaseDatas.add(hBaseData);
                         }
                     }
