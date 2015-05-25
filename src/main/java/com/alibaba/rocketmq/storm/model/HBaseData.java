@@ -20,6 +20,7 @@ public class HBaseData {
         this.columnFamily = columnFamily;
         this.rowKey = rowKey;
         this.data = data;
+        toString();
     }
 
     public String getTable() {
@@ -52,5 +53,20 @@ public class HBaseData {
 
     public void setData(Map<String, byte[]> data) {
         this.data = data;
+    }
+
+    @Override
+    public String toString() {
+        String datas = "[=][";
+        for (Map.Entry entry:data.entrySet()){
+            datas = datas + entry.getKey() + "," + entry.getValue() + "]";
+        }
+        datas += "][=]";
+        return "HBaseData{" +
+                "table='" + table + '\'' +
+                ", columnFamily='" + columnFamily + '\'' +
+                ", rowKey='" + rowKey + '\'' +
+                ", data=" + datas +
+                '}';
     }
 }
