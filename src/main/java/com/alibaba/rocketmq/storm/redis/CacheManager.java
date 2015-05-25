@@ -1,6 +1,7 @@
 package com.alibaba.rocketmq.storm.redis;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Transaction;
 
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,16 @@ public class CacheManager {
         jedis.set(key, value);
     }
 
+    public void setKeyLive(Map<String, String> entries, int live){
+        Transaction tx = jedis.multi();
+        for (Map.Entry<String, String> entry : entries.entrySet()) {
+            tx.setex(entry.getKey(), live, entry.getValue());
+        }
+        List<Object> result = tx.exec();
+        if (null == result || result.isEmpty() || (long) result.get(0) < 1)
+            System.out.println(" insert " + entries + " failed.");
+
+    }
     /**
      * Set the value to the key and specify the key's life cycle as seconds.
      * @param key

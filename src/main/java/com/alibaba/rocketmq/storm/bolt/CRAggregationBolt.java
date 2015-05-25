@@ -166,6 +166,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
                     //TODO persist map
                     List<HBaseData> hBaseDatas = new ArrayList<>();
+                    Map<String, String> red = new HashMap<>();
                     for (Map.Entry<String, HashMap<String, HashMap<String, Long>>> row : map.entrySet()) {
                         String offerId = row.getKey();
                         HashMap<String, HashMap<String, Long>> affMap = row.getValue();
@@ -206,12 +207,12 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
                             data.put(COLUMN_CLICK, click.toString().getBytes(DEFAULT_CHARSET));
                             data.put(COLUMN_CONVERSION, conversion.toString().getBytes(DEFAULT_CHARSET));
-                            cacheManager.setKeyLive(key, PERIOD * NUMBERS, "{click: " + click + ", conversion: " + conversion + "}");
+                            red.put(key, "{click: " + click + ", conversion: " + conversion + "}");
                             HBaseData hBaseData = new HBaseData(TABLE_NAME, rowKey, COLUMN_FAMILY, data);
                             hBaseDatas.add(hBaseData);
                         }
                     }
-
+                    cacheManager.setKeyLive(red, PERIOD * NUMBERS);
                     hBaseClient.insertBatch(hBaseDatas);
 
                     LOG.info("Persisting aggregation result done.");
