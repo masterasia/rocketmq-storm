@@ -18,10 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -162,6 +159,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                     DateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT);
 
                     //TODO persist map
+                    List<HBaseData> hBaseDatas = new ArrayList<>();
                     for (Map.Entry<String, HashMap<String, HashMap<String, Long>>> row : map.entrySet()) {
                         String offerId = row.getKey();
                         HashMap<String, HashMap<String, Long>> affMap = row.getValue();
@@ -201,9 +199,12 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                             LOG.info("[Conversion] Key = " + conversion.toString());
                             cacheManager.setKeyLive(key, PERIOD * NUMBERS, "{click: " + click + ", conversion: " + conversion + "}");
                             HBaseData hBaseData = new HBaseData(TABLE_NAME, rowKey, "t", data);
-                            hBaseClient.insert(hBaseData);
+                            hBaseDatas.add(hBaseData);
                         }
                     }
+
+                    hBaseClient.insertBatch(hBaseDatas);
+
                     LOG.info("Persisting aggregation result done.");
                 } catch (Exception e) {
                     LOG.error("Persistence of aggregated result failed.", e);
