@@ -74,7 +74,7 @@ public class HBaseClient {
                 status = HBaseClientStatus.STARTING;
                 try {
                     config = HBaseConfiguration.create();
-                    runLoginAndRenewalThread(config);
+//                    runLoginAndRenewalThread(config);
                     status = HBaseClientStatus.STARTED;
                 } catch (Exception e) {
                     status = HBaseClientStatus.START_FAILED;
