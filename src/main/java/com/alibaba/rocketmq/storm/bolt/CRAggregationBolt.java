@@ -162,6 +162,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                             String affId = affRow.getKey();
                             HashMap<String, Long> eventMap = affRow.getValue();
                             String key = offerId + "_" + affId + "_" +  dateFormatter.format(calendar.getTime());
+                            String rowKey = offerId + "_" + affId + "_" + (Long.MAX_VALUE - calendar.getTimeInMillis());
                             StringBuilder click = new StringBuilder();
                             click.append("{");
 
@@ -191,6 +192,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                             LOG.info("[Click] Key = " + click.toString());
                             LOG.info("[Conversion] Key = " + conversion.toString());
                             cacheManager.setKeyLive(key, PERIOD * NUMBERS, "{click: " + click + ", conversion: " + conversion + "}");
+
                         }
                     }
                     LOG.info("Persisting aggregation result done.");
