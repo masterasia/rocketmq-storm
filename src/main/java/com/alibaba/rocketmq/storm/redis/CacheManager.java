@@ -39,7 +39,7 @@ public class CacheManager {
             tx.setex(entry.getKey(), live, entry.getValue());
         }
         List<Object> result = tx.exec();
-        if (null == result || result.isEmpty() || (long) result.get(0) < 1)
+        if (null == result || result.isEmpty())
             System.out.println(" insert " + entries + " failed.");
 
     }
