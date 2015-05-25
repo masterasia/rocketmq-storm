@@ -7,7 +7,9 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.rocketmq.common.message.MessageExt;
+import com.alibaba.rocketmq.storm.hbase.HBaseClient;
 import com.alibaba.rocketmq.storm.model.CRLog;
+import com.alibaba.rocketmq.storm.model.HBaseData;
 import com.alibaba.rocketmq.storm.redis.CacheManager;
 import com.alibaba.rocketmq.storm.redis.Constant;
 import org.slf4j.Logger;
@@ -40,6 +42,8 @@ public class CRAggregationBolt implements IRichBolt, Constant {
     private OutputCollector collector;
 
     private static final String DATE_FORMAT = "yyyyMMddHHmmss";
+
+    private static final String TABLE_NAME = "eagle_log";
 
     private AtomicReference<HashMap<String, HashMap<String, HashMap<String, Long>>>>
             atomicReference = new AtomicReference<>();
@@ -134,7 +138,10 @@ public class CRAggregationBolt implements IRichBolt, Constant {
     class PersistTask implements Runnable {
         private final CacheManager cacheManager = CacheManager.getInstance();
 
+        private HBaseClient hBaseClient = new HBaseClient();
+
         public PersistTask() {
+            hBaseClient.start();
         }
 
         @Override
@@ -168,6 +175,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
                             StringBuilder conversion = new StringBuilder();
                             conversion.append("{");
+                            Map<String, byte[]> data = new HashMap<String, byte[]>();
                             for (Map.Entry<String, Long> eventRow : eventMap.entrySet()) {
                                 String event = eventRow.getKey();
                                 if (event.startsWith("C")) {
@@ -192,7 +200,8 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                             LOG.info("[Click] Key = " + click.toString());
                             LOG.info("[Conversion] Key = " + conversion.toString());
                             cacheManager.setKeyLive(key, PERIOD * NUMBERS, "{click: " + click + ", conversion: " + conversion + "}");
-
+                            HBaseData hBaseData = new HBaseData(TABLE_NAME, rowKey, "t", data);
+                            hBaseClient.insert(hBaseData);
                         }
                     }
                     LOG.info("Persisting aggregation result done.");
