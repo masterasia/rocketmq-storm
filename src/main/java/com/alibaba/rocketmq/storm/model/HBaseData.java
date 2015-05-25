@@ -20,7 +20,6 @@ public class HBaseData {
         this.columnFamily = columnFamily;
         this.rowKey = rowKey;
         this.data = data;
-        toString();
     }
 
     public String getTable() {

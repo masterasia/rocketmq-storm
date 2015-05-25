@@ -209,7 +209,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                             data.put(COLUMN_CONVERSION, conversion.toString().getBytes(DEFAULT_CHARSET));
                             red.put(key, "{click: " + click + ", conversion: " + conversion + "}");
                             HBaseData hBaseData = new HBaseData(TABLE_NAME, rowKey, COLUMN_FAMILY, data);
-                            LOG.error(hBaseData.toString());
+
                             hBaseDatas.add(hBaseData);
                         }
                     }
