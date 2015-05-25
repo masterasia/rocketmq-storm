@@ -15,7 +15,7 @@ public class HBaseData {
     public HBaseData() {
     }
 
-    public HBaseData(String table, String columnFamily, String rowKey, Map<String, byte[]> data) {
+    public HBaseData(String table, String rowKey, String columnFamily, Map<String, byte[]> data) {
         this.table = table;
         this.columnFamily = columnFamily;
         this.rowKey = rowKey;
