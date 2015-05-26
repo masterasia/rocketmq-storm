@@ -175,8 +175,8 @@ public class HBaseClient {
             scan.addFamily(columnFamily.getBytes(DEFAULT_CHARSET));
             DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 
-            byte[] startRowKey = Helper.generateKey(offerId, affiliateId, dateFormat.format(start.getTime())).getBytes(DEFAULT_CHARSET);
-            byte[] stopRowKey = Helper.generateKey(offerId, affiliateId, dateFormat.format(end.getTime())).getBytes(DEFAULT_CHARSET);
+            byte[] startRowKey = Helper.generateKey(offerId, affiliateId, start.getTimeInMillis() + "").getBytes(DEFAULT_CHARSET);
+            byte[] stopRowKey = Helper.generateKey(offerId, affiliateId, end.getTimeInMillis() + "").getBytes(DEFAULT_CHARSET);
 
             scan.setStartRow(startRowKey);
             scan.setStopRow(stopRowKey);

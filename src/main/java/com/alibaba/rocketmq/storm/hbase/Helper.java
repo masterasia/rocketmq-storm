@@ -13,7 +13,8 @@ public final class Helper {
         checkNotNullNorEmpty("affiliateId", affiliateId);
         checkNotNullNorEmpty("timestamp", timestamp);
         String comb = offerId + "_" + affiliateId;
-        return comb.hashCode() % 64 + "_" + comb + "_" + timestamp;
+        long endWith = Long.MAX_VALUE - Long.parseLong(timestamp);
+        return comb.hashCode() % 64 + "_" + comb + "_" + endWith;
     }
 
 }

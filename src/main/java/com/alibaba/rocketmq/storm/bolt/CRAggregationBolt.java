@@ -171,7 +171,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                     //Use Beijing Time Zone: GMT+8
                     calendar.setTimeZone(TimeZone.getTimeZone("GMT+8"));
                     DateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT);
-                    String timestamp = dateFormatter.format(calendar.getTime());
+                    String timestamp = calendar.getTimeInMillis() + "";
                     List<HBaseData> hBaseDataList = new ArrayList<>();
                     Map<String, String> redisCacheMap = new HashMap<>();
                     for (Map.Entry<String, HashMap<String, HashMap<String, Long>>> row : map.entrySet()) {
