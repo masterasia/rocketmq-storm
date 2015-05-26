@@ -57,8 +57,8 @@ public class HBaseData {
     @Override
     public String toString() {
         String datas = "[=][";
-        for (Map.Entry entry:data.entrySet()){
-            datas = datas + entry.getKey() + "," + entry.getValue() + "]";
+        for (Map.Entry<String, byte[]> entry:data.entrySet()){
+            datas = datas + entry.getKey() + "," + new String(entry.getValue()) + "]";
         }
         datas += "][=]";
         return "HBaseData{" +

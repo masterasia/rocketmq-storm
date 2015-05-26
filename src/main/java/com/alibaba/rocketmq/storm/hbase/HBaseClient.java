@@ -174,10 +174,9 @@ public class HBaseClient {
             Scan scan = new Scan();
             scan.addFamily(columnFamily.getBytes(DEFAULT_CHARSET));
             DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-            byte[] startRowKey = (offerId + "_" + affiliateId + "_" + dateFormat.format(start.getTime()))
-                    .getBytes(DEFAULT_CHARSET);
-            byte[] stopRowKey = (offerId + "_" + affiliateId + "_" + dateFormat.format(end.getTime()))
-                    .getBytes(DEFAULT_CHARSET);
+
+            byte[] startRowKey = Helper.generateKey(offerId, affiliateId, dateFormat.format(start.getTime())).getBytes(DEFAULT_CHARSET);
+            byte[] stopRowKey = Helper.generateKey(offerId, affiliateId, dateFormat.format(end.getTime())).getBytes(DEFAULT_CHARSET);
 
             scan.setStartRow(startRowKey);
             scan.setStopRow(stopRowKey);
@@ -189,6 +188,8 @@ public class HBaseClient {
                 Map<String, byte[]> data = new HashMap<>();
                 dataRow.setData(data);
                 dataRow.setRowKey(new String(r.getRow(), DEFAULT_CHARSET));
+                dataRow.setTable(table);
+                dataRow.setColumnFamily(columnFamily);
                 for (Cell cell : r.rawCells()) {
                     data.put(new String(CellUtil.cloneQualifier(cell)), CellUtil.cloneValue(cell));
                 }
