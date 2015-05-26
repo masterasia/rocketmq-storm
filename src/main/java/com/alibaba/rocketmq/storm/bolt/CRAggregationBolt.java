@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.rocketmq.common.message.MessageExt;
 import com.alibaba.rocketmq.storm.hbase.HBaseClient;
 import com.alibaba.rocketmq.storm.hbase.Helper;
+import com.alibaba.rocketmq.storm.hbase.exception.HBasePersistenceException;
 import com.alibaba.rocketmq.storm.model.CRLog;
 import com.alibaba.rocketmq.storm.model.HBaseData;
 import com.alibaba.rocketmq.storm.redis.CacheManager;
@@ -48,6 +49,10 @@ public class CRAggregationBolt implements IRichBolt, Constant {
     private static final String COLUMN_CLICK = "click";
     private static final String COLUMN_CONVERSION = "conv";
     private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
+
+    private static final int HBASE_MAX_RETRY_TIMES = 5;
+
+    private static final int REDIS_MAX_RETRY_TIMES = 5;
 
     private AtomicReference<HashMap<String, HashMap<String, HashMap<String, Long>>>>
             atomicReference = new AtomicReference<>();
@@ -167,7 +172,6 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                     calendar.setTimeZone(TimeZone.getTimeZone("GMT+8"));
                     DateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT);
                     String timestamp = dateFormatter.format(calendar.getTime());
-                    //TODO persist map
                     List<HBaseData> hBaseDataList = new ArrayList<>();
                     Map<String, String> redisCacheMap = new HashMap<>();
                     for (Map.Entry<String, HashMap<String, HashMap<String, Long>>> row : map.entrySet()) {
@@ -214,8 +218,35 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                             hBaseDataList.add(hBaseData);
                         }
                     }
-                    cacheManager.setKeyLive(redisCacheMap, PERIOD * NUMBERS);
-                    hBaseClient.insertBatch(hBaseDataList);
+
+                    for (int i = 0; i < REDIS_MAX_RETRY_TIMES; i++) {
+                        if (!cacheManager.setKeyLive(redisCacheMap, PERIOD * NUMBERS)) {
+                            if (i < REDIS_MAX_RETRY_TIMES - 1) {
+                                LOG.error("Persisting to Redis failed, retry in " + (i + 1) + " seconds");
+                            } else {
+                                LOG.error("The following data are dropped due to failure to persist to Redis: %s", redisCacheMap);
+                            }
+
+                            Thread.sleep((i + 1) * 1000);
+                        } else {
+                            break;
+                        }
+                    }
+
+                    for (int i = 0; i < HBASE_MAX_RETRY_TIMES; i++) {
+                        try {
+                            hBaseClient.insertBatch(hBaseDataList);
+                            break;
+                        } catch (HBasePersistenceException e) {
+                            if (i < HBASE_MAX_RETRY_TIMES - 1) {
+                                LOG.error("Persisting aggregation data to HBase failed. Retry in " + (i + 1) + " second(s)");
+                            } else {
+                                LOG.error("The following aggregation data are dropped: %s", hBaseDataList);
+                            }
+                        }
+
+                        Thread.sleep((i + 1) * 1000);
+                    }
 
                     LOG.info("Persisting aggregation result done.");
                 } catch (Exception e) {

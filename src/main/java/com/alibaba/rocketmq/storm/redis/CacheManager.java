@@ -1,5 +1,7 @@
 package com.alibaba.rocketmq.storm.redis;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Transaction;
 
@@ -8,13 +10,21 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by robert on 2015/5/20.
+ * <p>
+ * Wrapper of {@link Jedis} client.
+ * </p>
+ *
+ * @author Xu Tao
+ * @version 1.0
+ * @since 1.0
  */
 public class CacheManager {
 
     private Jedis jedis = RedisPoolManager.createInstance();
 
     private static CacheManager cacheManager = new CacheManager();
+
+    private static final Logger LOG = LoggerFactory.getLogger(CacheManager.class);
 
     private CacheManager() {
     }
@@ -33,20 +43,24 @@ public class CacheManager {
         jedis.set(key, value);
     }
 
-    public void setKeyLive(Map<String, String> entries, int live){
+    public boolean setKeyLive(Map<String, String> entries, int live) {
         Transaction tx = jedis.multi();
         for (Map.Entry<String, String> entry : entries.entrySet()) {
             tx.setex(entry.getKey(), live, entry.getValue());
         }
         List<Object> result = tx.exec();
-        if (null == result || result.isEmpty())
-            System.out.println(" insert " + entries + " failed.");
+        if (null == result || result.isEmpty()) {
+            LOG.error("Failed to insert " + entries);
+            return false;
+        }
 
+        return true;
     }
     /**
-     * Set the value to the key and specify the key's life cycle as seconds.
+     * Set the value to the key and specify the key's life cycle in seconds.
+     *
      * @param key
-     * @param live
+     * @param live Time to live in seconds.
      * @param value
      */
     public void setKeyLive(String key, int live, String value) {

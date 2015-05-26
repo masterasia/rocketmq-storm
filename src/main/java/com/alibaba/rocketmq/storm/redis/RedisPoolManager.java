@@ -7,7 +7,13 @@ import redis.clients.jedis.JedisPoolConfig;
 import java.util.ResourceBundle;
 
 /**
- * Created by robert on 2015/5/20.
+ * <p>
+ *     Redis pool manager to better handle life cycle of {@link Jedis} client instances.
+ * </p>
+ *
+ * @author Xu tao
+ * @version 1.0
+ * @since 1.0
  */
 public class RedisPoolManager {
 
