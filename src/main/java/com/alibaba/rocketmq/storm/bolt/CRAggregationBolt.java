@@ -8,6 +8,7 @@ import backtype.storm.tuple.Tuple;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.rocketmq.common.message.MessageExt;
 import com.alibaba.rocketmq.storm.hbase.HBaseClient;
+import com.alibaba.rocketmq.storm.hbase.Helper;
 import com.alibaba.rocketmq.storm.model.CRLog;
 import com.alibaba.rocketmq.storm.model.HBaseData;
 import com.alibaba.rocketmq.storm.redis.CacheManager;
@@ -163,18 +164,17 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                     //Use Beijing Time Zone: GMT+8
                     calendar.setTimeZone(TimeZone.getTimeZone("GMT+8"));
                     DateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT);
-
+                    String timestamp = dateFormatter.format(calendar.getTime());
                     //TODO persist map
-                    List<HBaseData> hBaseDatas = new ArrayList<>();
-                    Map<String, String> red = new HashMap<>();
+                    List<HBaseData> hBaseDataList = new ArrayList<>();
+                    Map<String, String> redisCacheMap = new HashMap<>();
                     for (Map.Entry<String, HashMap<String, HashMap<String, Long>>> row : map.entrySet()) {
                         String offerId = row.getKey();
                         HashMap<String, HashMap<String, Long>> affMap = row.getValue();
                         for (Map.Entry<String, HashMap<String, Long>> affRow : affMap.entrySet()) {
                             String affId = affRow.getKey();
                             HashMap<String, Long> eventMap = affRow.getValue();
-                            String key = offerId + "_" + affId + "_" +  dateFormatter.format(calendar.getTime());
-                            String rowKey = offerId + "_" + affId + "_" + (Long.MAX_VALUE - calendar.getTimeInMillis());
+                            String rowKey = Helper.generateKey(offerId, affId, timestamp);
                             StringBuilder click = new StringBuilder();
                             click.append("{");
 
@@ -207,14 +207,13 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
                             data.put(COLUMN_CLICK, click.toString().getBytes(DEFAULT_CHARSET));
                             data.put(COLUMN_CONVERSION, conversion.toString().getBytes(DEFAULT_CHARSET));
-                            red.put(key, "{click: " + click + ", conversion: " + conversion + "}");
+                            redisCacheMap.put(rowKey, "{click: " + click + ", conversion: " + conversion + "}");
                             HBaseData hBaseData = new HBaseData(TABLE_NAME, rowKey, COLUMN_FAMILY, data);
-
-                            hBaseDatas.add(hBaseData);
+                            hBaseDataList.add(hBaseData);
                         }
                     }
-                    cacheManager.setKeyLive(red, PERIOD * NUMBERS);
-                    hBaseClient.insertBatch(hBaseDatas);
+                    cacheManager.setKeyLive(redisCacheMap, PERIOD * NUMBERS);
+                    hBaseClient.insertBatch(hBaseDataList);
 
                     LOG.info("Persisting aggregation result done.");
                 } catch (Exception e) {
