@@ -157,6 +157,8 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                             atomicReference.getAndSet(new HashMap<String, HashMap<String, HashMap<String, Long>>>());
 
                     if (null == map || map.isEmpty()) {
+                        LOG.info("No data to persist. Sleep to wait for the next cycle.");
+                        Thread.sleep(PERIOD * 1000);
                         continue;
                     }
 
