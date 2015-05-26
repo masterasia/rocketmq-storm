@@ -175,8 +175,9 @@ public class HBaseClient {
             scan.addFamily(columnFamily.getBytes(DEFAULT_CHARSET));
             DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 
-            byte[] startRowKey = Helper.generateKey(offerId, affiliateId, start.getTimeInMillis() + "").getBytes(DEFAULT_CHARSET);
-            byte[] stopRowKey = Helper.generateKey(offerId, affiliateId, end.getTimeInMillis() + "").getBytes(DEFAULT_CHARSET);
+            //because we use long max - timestamp like row key so the last one is the first one.
+            byte[] stopRowKey = Helper.generateKey(offerId, affiliateId, start.getTimeInMillis() + "").getBytes(DEFAULT_CHARSET);
+            byte[] startRowKey = Helper.generateKey(offerId, affiliateId, end.getTimeInMillis() + "").getBytes(DEFAULT_CHARSET);
 
             scan.setStartRow(startRowKey);
             scan.setStopRow(stopRowKey);
