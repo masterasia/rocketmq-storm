@@ -8,6 +8,4 @@ public interface Constant {
     int INCREMENT = 1;
 
     long BASE = 1L;
-
-    String REDIS_CHANNEL = "EAGLE_CHANNEL";
 }

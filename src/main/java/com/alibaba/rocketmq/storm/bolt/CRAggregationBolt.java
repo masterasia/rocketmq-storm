@@ -245,7 +245,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                         Thread.sleep((i + 1) * 1000);
                     }
 
-                    cacheManager.publish(redisCacheMap, REDIS_CHANNEL);
+                    cacheManager.publish(redisCacheMap);
 
                     LOG.info("Persisting aggregation result done.");
                 } catch (Exception e) {
