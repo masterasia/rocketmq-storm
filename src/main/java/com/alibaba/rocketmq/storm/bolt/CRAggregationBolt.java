@@ -18,8 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -170,7 +168,6 @@ public class CRAggregationBolt implements IRichBolt, Constant {
                     Calendar calendar = Calendar.getInstance();
                     //Use Beijing Time Zone: GMT+8
                     calendar.setTimeZone(TimeZone.getTimeZone("GMT+8"));
-                    DateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT);
                     String timestamp = calendar.getTimeInMillis() + "";
                     List<HBaseData> hBaseDataList = new ArrayList<>();
                     Map<String, String> redisCacheMap = new HashMap<>();
@@ -247,6 +244,8 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
                         Thread.sleep((i + 1) * 1000);
                     }
+
+                    cacheManager.publish(redisCacheMap, REDIS_CHANNEL);
 
                     LOG.info("Persisting aggregation result done.");
                 } catch (Exception e) {

@@ -2,8 +2,6 @@ package com.alibaba.rocketmq.storm.hbase;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -173,7 +171,6 @@ public class HBaseClient {
             hTable = new HTable(config, table);
             Scan scan = new Scan();
             scan.addFamily(columnFamily.getBytes(DEFAULT_CHARSET));
-            DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 
             //because we use long max - timestamp like row key so the last one is the first one.
             byte[] stopRowKey = Helper.generateKey(offerId, affiliateId, start.getTimeInMillis() + "").getBytes(DEFAULT_CHARSET);

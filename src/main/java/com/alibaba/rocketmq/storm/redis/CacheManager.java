@@ -67,6 +67,22 @@ public class CacheManager {
         jedis.setex(key, live, value);
     }
 
+    public void publish(Map<String, String> entries, String channel){
+        try {
+            Transaction tx = jedis.multi();
+            for (Map.Entry<String, String> entry : entries.entrySet()) {
+                tx.publish(channel, entry.getKey());
+            }
+            tx.exec();
+        }catch (Exception e){
+            LOG.error("Failed to publish.");
+        }
+    }
+
+    public void publish(String key, String value, String channel){
+        jedis.publish(channel, key + value);
+    }
+
     /**
      * Append the value to an existing key
      * @param key
