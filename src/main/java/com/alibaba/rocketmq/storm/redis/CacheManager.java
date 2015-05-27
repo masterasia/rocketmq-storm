@@ -72,7 +72,7 @@ public class CacheManager {
             Transaction tx = jedis.multi();
             for (Map.Entry<String, String> entry : entries.entrySet()) {
                 String key = entry.getKey();
-                tx.publish(key.substring(key.indexOf("_") + 1, key.lastIndexOf("_")), key.substring(key.indexOf("_") + 1));
+                tx.publish(key.substring(key.indexOf("_") + 1, key.lastIndexOf("_")), key);
             }
             tx.exec();
         }catch (Exception e){
