@@ -67,12 +67,12 @@ public class CacheManager {
         jedis.setex(key, live, value);
     }
 
-    public void publish(Map<String, String> entries){
+    public void publish(Map<String, String> entries, String channel){
         try {
             Transaction tx = jedis.multi();
             for (Map.Entry<String, String> entry : entries.entrySet()) {
                 String key = entry.getKey();
-                tx.publish(key.substring(key.indexOf("_") + 1, key.lastIndexOf("_")), key);
+                tx.publish(channel, key);
             }
             tx.exec();
         }catch (Exception e){
