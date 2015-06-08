@@ -10,6 +10,7 @@ import com.alibaba.rocketmq.common.message.MessageExt;
 import com.alibaba.rocketmq.storm.hbase.HBaseClient;
 import com.alibaba.rocketmq.storm.hbase.Helper;
 import com.alibaba.rocketmq.storm.hbase.exception.HBasePersistenceException;
+import com.alibaba.rocketmq.storm.internal.tools.CRLogUtils;
 import com.alibaba.rocketmq.storm.model.CRLog;
 import com.alibaba.rocketmq.storm.model.HBaseData;
 import com.alibaba.rocketmq.storm.redis.CacheManager;
@@ -92,27 +93,29 @@ public class CRAggregationBolt implements IRichBolt, Constant {
             if (msgObj instanceof MessageExt) {
                 MessageExt msg = (MessageExt) msgObj;
                 CRLog logEntry = JSON.parseObject(new String(msg.getBody(), Charset.forName("UTF-8")), CRLog.class);
-                HashMap<String, HashMap<String, HashMap<String, Long>>> map = atomicReference.get();
-                if (!map.containsKey(logEntry.getOffer_id())) {
-                    HashMap<String, HashMap<String, Long>> affMap = new HashMap<>();
-                    HashMap<String, Long> eventMap = new HashMap<>();
-                    eventMap.put(logEntry.getEvent_code(), BASE);
-                    affMap.put(logEntry.getAffiliate_id(), eventMap);
-                    map.put(logEntry.getOffer_id(), affMap);
-                } else {
-                    HashMap<String, HashMap<String, Long>> affMap = map.get(logEntry.getOffer_id());
-                    if (affMap.containsKey(logEntry.getAffiliate_id())) {
-                        HashMap<String, Long> eventMap = affMap.get(logEntry.getAffiliate_id());
-                        String eventCode = logEntry.getEvent_code();
-                        if (eventMap.containsKey(eventCode)) {
-                            eventMap.put(eventCode, eventMap.get(eventCode) + INCREMENT);
-                        } else {
-                            eventMap.put(logEntry.getEvent_code(), BASE);
-                        }
-                    } else {
+                if (CRLogUtils.checkCRLog(logEntry)) {
+                    HashMap<String, HashMap<String, HashMap<String, Long>>> map = atomicReference.get();
+                    if (!map.containsKey(logEntry.getOffer_id())) {
+                        HashMap<String, HashMap<String, Long>> affMap = new HashMap<>();
                         HashMap<String, Long> eventMap = new HashMap<>();
                         eventMap.put(logEntry.getEvent_code(), BASE);
                         affMap.put(logEntry.getAffiliate_id(), eventMap);
+                        map.put(logEntry.getOffer_id(), affMap);
+                    } else {
+                        HashMap<String, HashMap<String, Long>> affMap = map.get(logEntry.getOffer_id());
+                        if (affMap.containsKey(logEntry.getAffiliate_id())) {
+                            HashMap<String, Long> eventMap = affMap.get(logEntry.getAffiliate_id());
+                            String eventCode = logEntry.getEvent_code();
+                            if (eventMap.containsKey(eventCode)) {
+                                eventMap.put(eventCode, eventMap.get(eventCode) + INCREMENT);
+                            } else {
+                                eventMap.put(logEntry.getEvent_code(), BASE);
+                            }
+                        } else {
+                            HashMap<String, Long> eventMap = new HashMap<>();
+                            eventMap.put(logEntry.getEvent_code(), BASE);
+                            affMap.put(logEntry.getAffiliate_id(), eventMap);
+                        }
                     }
                 }
             } else {
