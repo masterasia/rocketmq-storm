@@ -1,4 +1,4 @@
-rocketmq.spout.consumer.group=CG_YMREDIRECTOR_QUEUE_TRACE_EVENT
+rocketmq.spout.consumer.group=CG_YMREDIRECTOR_QUEUE_TRACE_EVENT_EAGLE
 rocketmq.spout.topic=T_YMREDIRECTOR_QUEUE_TRACE_EVENT
 rocketmq.spout.topic.tag=*
 
