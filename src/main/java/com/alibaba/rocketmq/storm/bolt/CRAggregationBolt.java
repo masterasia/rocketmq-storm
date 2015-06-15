@@ -46,7 +46,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
     private static final String COLUMN_FAMILY = "t";
 
     private static final String COLUMN_CLICK = "click";
-    private static final String COLUMN_CONVERSION = "conversion";
+    private static final String COLUMN_CONVERSION = "conv";
     private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 
     private static final int HBASE_MAX_RETRY_TIMES = 5;
@@ -213,7 +213,7 @@ public class CRAggregationBolt implements IRichBolt, Constant {
 
                             data.put(COLUMN_CLICK, click.toString().getBytes(DEFAULT_CHARSET));
                             data.put(COLUMN_CONVERSION, conversion.toString().getBytes(DEFAULT_CHARSET));
-                            redisCacheMap.put(rowKey, "{click: " + click + ", conversion: " + conversion + "}");
+                            redisCacheMap.put(rowKey, "{click: " + click + ", conv: " + conversion + "}");
                             HBaseData hBaseData = new HBaseData(TABLE_NAME, rowKey, COLUMN_FAMILY, data);
                             hBaseDataList.add(hBaseData);
                         }
